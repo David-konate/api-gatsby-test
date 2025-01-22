@@ -2,7 +2,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
-const cors = require("cors"); // Importer le module CORS
+const cors = require("cors");
 const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
 const fs = require("fs");
@@ -22,7 +22,7 @@ const app = express();
 
 // Configurer les options CORS
 const corsOptions = {
-  origin: "http://localhost:3000", // Remplacez par l'URL de votre frontend
+  origin: "http://localhost:8000", // Remplacez par l'URL exacte utilisée par votre frontend
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: [
     "Content-Type",
@@ -30,7 +30,7 @@ const corsOptions = {
     "Accept",
     "X-Requested-With",
   ],
-  credentials: true, // Permet l'envoi des cookies ou des en-têtes d'authentification
+  credentials: true,
 };
 
 // Utiliser le middleware CORS
@@ -50,6 +50,16 @@ mongoose
   })
   .then(() => console.log("MongoDB connecté"))
   .catch((err) => console.error("Erreur de connexion MongoDB :", err));
+
+// Tester la connexion Cloudinary au démarrage du serveur
+(async () => {
+  try {
+    const result = await cloudinary.api.ping();
+    console.log("Connexion à Cloudinary réussie :", result);
+  } catch (error) {
+    console.error("Erreur de connexion à Cloudinary :", error.message);
+  }
+})();
 
 // Importer les routes Markdown
 const markdownRoutes = require("./routes/markDownRoutes");
