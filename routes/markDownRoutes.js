@@ -238,19 +238,30 @@ router.get("/check-or-generate-slug/:slug", async (req, res) => {
   }
 });
 
-router.post("/save/:slug", upload, async (req, res) => {
+router.post("/save/:slug", upload.any(), async (req, res) => {
   console.log("req.files", req.files);
 
   try {
-    // Vérifiez que le fichier Markdown est présent
-    if (!req.files || !req.files.markdown || req.files.markdown.length === 0) {
+    // Vérifier que des fichiers sont présents dans la requête
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({
+        status: "error",
+        message: "Aucun fichier reçu.",
+      });
+    }
+
+    // Vérifier que le fichier Markdown est présent
+    const markdownFile = req.files.find(
+      (file) => file.mimetype === "text/markdown"
+    );
+    if (!markdownFile) {
       return res.status(400).json({
         status: "error",
         message: "Aucun fichier Markdown reçu.",
       });
     }
 
-    // Vérifiez que le slug est présent
+    // Vérifier que le slug est présent
     const slug = req.params.slug; // Le slug est dans les paramètres de l'URL
     if (!slug) {
       return res.status(400).json({
@@ -259,8 +270,8 @@ router.post("/save/:slug", upload, async (req, res) => {
       });
     }
 
-    // Récupérer le fichier Markdown (le buffer du fichier)
-    const file = req.files.markdown[0]; // Récupération du premier fichier Markdown
+    // Récupérer le buffer du fichier Markdown
+    const file = markdownFile; // Utilisation du fichier Markdown trouvé
 
     // Envoi du fichier à Cloudinary
     const stream = cloudinary.uploader.upload_stream(
@@ -273,7 +284,7 @@ router.post("/save/:slug", upload, async (req, res) => {
         if (error) {
           return res.status(500).json({
             status: "error",
-            message: "Erreur Cloudinary",
+            message: "Erreur lors du téléchargement sur Cloudinary.",
             error: error.message,
           });
         }
@@ -289,8 +300,7 @@ router.post("/save/:slug", upload, async (req, res) => {
       }
     );
 
-    // Envoyer l
-    // e buffer du fichier à Cloudinary via un stream
+    // Envoyer le buffer du fichier à Cloudinary via un stream
     stream.end(file.buffer); // Utiliser le buffer du fichier pour le télécharger
   } catch (error) {
     console.error("Erreur lors de l'enregistrement du Markdown :", error);
